@@ -27,7 +27,7 @@ namespace SqlFramework
         private List<string> KeyAttributes { get; set; }
         public SqlRepository(string _connection)
         {
-            GetTableNameByClass(new T());
+            GetTableNameAttribute(new T());
             Key = "";
             Value = "";
             GetT = new T();
@@ -37,7 +37,7 @@ namespace SqlFramework
         {
             
         }
-        private void GetTableNameByClass(T tableClass)
+        private void GetTableNameAttribute(T tableClass)
         {
             datas = new Dictionary<object, object>();
             var attrs = tableClass.GetType().GetCustomAttributes(false);

@@ -35,7 +35,7 @@ namespace SqlFramework
         }
         public SqlRepository()
         {
-            
+
         }
         private void GetTableNameAttribute(T tableClass)
         {
@@ -67,11 +67,11 @@ namespace SqlFramework
                 }
                 command.ExecuteNonQuery();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine("[Error Occurred]  Error Message : {0}", e.Message);
             }
-           
+
             finally
             {
                 _connection.Close();
@@ -131,12 +131,12 @@ namespace SqlFramework
             SqlCommand command = new SqlCommand(cmd, _connection);
             List<T> entities = new List<T>();
             try
-            {      
+            {
                 _connection.Open();
                 SqlDataReader dr = command.ExecuteReader();
                 PropertyInfo[] properties = GetT.GetType().GetProperties();
                 Hashtable hashtable = new Hashtable();
-               
+
                 foreach (PropertyInfo propertyInfo in properties)
                 {
                     hashtable.Add(propertyInfo.Name, propertyInfo);
@@ -165,10 +165,87 @@ namespace SqlFramework
             finally
             {
                 _connection.Close();
-               
+
             }
             return entities;
 
+        }
+
+        public List<T> GetAll(Expression<Func<T, bool>> filter)
+        {
+            BinaryExpression binaryExp = (BinaryExpression)filter.Body;
+            MemberExpression memberLeft = (MemberExpression)binaryExp.Left;
+            ConstantExpression memberRight = (ConstantExpression)binaryExp.Right;
+            PropertyInfo[] infos = GetT.GetType().GetProperties();
+            Hashtable hashtable = new Hashtable();
+            List<T> entities = new List<T>();
+            foreach (PropertyInfo property in infos)
+            {
+                hashtable.Add(property.Name, property);
+            }
+            string cmdText = String.Format(@"Select * from {0} Where {1}={2}", TableName, memberLeft.Member.Name, memberRight);
+
+            SqlCommand cmd = new SqlCommand(cmdText,_connection);
+            cmd.Parameters.AddWithValue("@" + memberLeft.Member.Name, memberRight.Value);
+            try
+            {
+                _connection.Open();
+                SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    T entity = new T();
+                    for (int i = 0; i < dr.FieldCount; i++)
+                    {
+                        PropertyInfo prop = (PropertyInfo)hashtable[dr.GetName(i)];
+                        if (prop!=null)
+                        {
+                            prop.SetValue(entity, dr.GetValue(i), null);
+                        }
+                    }
+                    entities.Add(entity);
+                }
+            }
+            catch (Exception e)
+            {
+
+                throw new Exception("[Error Occurred] Error Message: "+ e.Message.ToString());
+            }
+            return entities;
+        }
+
+        public T Get(Expression<Func<T, bool>> filter)
+        {
+            Key = "";
+            Value = "";
+            BinaryExpression binary = (BinaryExpression)filter.Body;
+            MemberExpression memberLeft = (MemberExpression)binary.Left;
+            ConstantExpression memberRight = (ConstantExpression)binary.Right;
+            Hashtable hashtable = new Hashtable();
+            PropertyInfo[] infos = GetT.GetType().GetProperties();
+            foreach (PropertyInfo info in infos)
+            {
+                hashtable.Add(info.Name, info);
+            }
+            
+            string cmdText = String.Format(@"Select * From {0} Where {1} = {2}", TableName, memberLeft.Member.Name, memberRight);
+            
+            SqlCommand cmd = new SqlCommand(cmdText,_connection);
+            cmd.Parameters.AddWithValue("@" + memberLeft.Member.Name, memberRight.Value);
+            _connection.Open();
+            SqlDataReader dr = cmd.ExecuteReader();
+            T entity = new T();
+            while (dr.Read())
+            { 
+                for (int i = 0; i < dr.FieldCount; i++)
+                {
+                    PropertyInfo prop = (PropertyInfo)hashtable[dr.GetName(i)];
+                    if (prop!=null)
+                    {
+                        prop.SetValue(entity, dr.GetValue(i), null);
+                    }
+                }
+            }
+            return entity;
         }
 
         private void CreateSelectQuery()
@@ -280,7 +357,7 @@ namespace SqlFramework
 
             }
 
-            
+
         }
 
         public void Delete(T data)
@@ -342,7 +419,7 @@ namespace SqlFramework
 
             }
 
-           
+
         }
     }
 }

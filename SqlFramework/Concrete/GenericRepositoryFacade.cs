@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 using SqlFramework.Concrete.SqlRepository;
 using System.Linq.Expressions;
 
-namespace SqlFramework.Concrete.SqlRepositoryFacade
+namespace SqlFramework.Concrete
 {
-    public class GenericRepositoryFacade<T> where T : class,new()
+    public class GenericRepositoryFacade<T> where T : class, new()
     {
         private readonly SqlRepository<T> _repository;
-        
+
         public GenericRepositoryFacade(string connection)
         {
             _repository = new SqlRepository<T>(connection);
@@ -30,13 +30,13 @@ namespace SqlFramework.Concrete.SqlRepositoryFacade
         {
             _repository.Delete(entity);
         }
-        public T Get(Expression<Func<T,bool>>filter)
+        public T Get(Expression<Func<T, bool>> filter)
         {
             return _repository.Get(filter);
         }
         public List<T> GetAll(Expression<Func<T, bool>> filter = null)
         {
-            return filter==null ? _repository.GetAll().ToList() : _repository.GetAll(filter).ToList();
+            return filter == null ? _repository.GetAll().ToList() : _repository.GetAll(filter).ToList();
         }
 
     }

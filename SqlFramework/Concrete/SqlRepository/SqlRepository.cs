@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SqlFramework.Abstract;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -11,13 +12,13 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SqlFramework
+namespace SqlFramework.Concrete.SqlRepository
 {
-    public class SqlRepository<T> where T : class, new()
+    public class SqlRepository<T> : ISqlRepository<T> where T : class, new()
     {
 
-        SqlConnection _connection;
-        private T GetT { get; set; }
+        private SqlConnection _connection;
+        private T GetT { get; }
         private string TableName { get; set; }
         private string Key { get; set; }
         private string Value { get; set; }
@@ -59,7 +60,7 @@ namespace SqlFramework
             try
             {
                 _connection.Open();
-                string cmd = String.Format(@"Insert Into {0} ({1}) Values ({2})", TableName, Key, Value);
+                string cmd = string.Format(@"Insert Into {0} ({1}) Values ({2})", TableName, Key, Value);
                 SqlCommand command = new SqlCommand(cmd, _connection);
                 foreach (var item in datas)
                 {
@@ -79,8 +80,8 @@ namespace SqlFramework
         }
         private void CreateAddQuery(T data)
         {
-            this.Key = "";
-            this.Value = "";
+            Key = "";
+            Value = "";
             datas = new Dictionary<object, object>();
             KeyAttributes = new List<string>();
             foreach (var prop in data.GetType().GetProperties())
@@ -119,15 +120,15 @@ namespace SqlFramework
             }
             if (Key.Length > 0)
             {
-                Key = Key.Substring(0, (Key.Length - 1));
-                Value = Value.Substring(0, (Value.Length - 1));
+                Key = Key.Substring(0, Key.Length - 1);
+                Value = Value.Substring(0, Value.Length - 1);
             }
         }
 
         public List<T> GetAll()
         {
             CreateSelectQuery();
-            string cmd = String.Format("Select {0} from {1}", Key, TableName);
+            string cmd = string.Format("Select {0} from {1}", Key, TableName);
             SqlCommand command = new SqlCommand(cmd, _connection);
             List<T> entities = new List<T>();
             try
@@ -183,9 +184,9 @@ namespace SqlFramework
             {
                 hashtable.Add(property.Name, property);
             }
-            string cmdText = String.Format(@"Select * from {0} Where {1}={2}", TableName, memberLeft.Member.Name, memberRight);
+            string cmdText = string.Format(@"Select * from {0} Where {1}={2}", TableName, memberLeft.Member.Name, memberRight);
 
-            SqlCommand cmd = new SqlCommand(cmdText,_connection);
+            SqlCommand cmd = new SqlCommand(cmdText, _connection);
             cmd.Parameters.AddWithValue("@" + memberLeft.Member.Name, memberRight.Value);
             try
             {
@@ -197,7 +198,7 @@ namespace SqlFramework
                     for (int i = 0; i < dr.FieldCount; i++)
                     {
                         PropertyInfo prop = (PropertyInfo)hashtable[dr.GetName(i)];
-                        if (prop!=null)
+                        if (prop != null)
                         {
                             prop.SetValue(entity, dr.GetValue(i), null);
                         }
@@ -208,7 +209,7 @@ namespace SqlFramework
             catch (Exception e)
             {
 
-                throw new Exception("[Error Occurred] Error Message: "+ e.Message.ToString());
+                throw new Exception("[Error Occurred] Error Message: " + e.Message.ToString());
             }
             return entities;
         }
@@ -226,20 +227,20 @@ namespace SqlFramework
             {
                 hashtable.Add(info.Name, info);
             }
-            
-            string cmdText = String.Format(@"Select * From {0} Where {1} = {2}", TableName, memberLeft.Member.Name, memberRight);
-            
-            SqlCommand cmd = new SqlCommand(cmdText,_connection);
+
+            string cmdText = string.Format(@"Select * From {0} Where {1} = {2}", TableName, memberLeft.Member.Name, memberRight);
+
+            SqlCommand cmd = new SqlCommand(cmdText, _connection);
             cmd.Parameters.AddWithValue("@" + memberLeft.Member.Name, memberRight.Value);
             _connection.Open();
             SqlDataReader dr = cmd.ExecuteReader();
             T entity = new T();
             while (dr.Read())
-            { 
+            {
                 for (int i = 0; i < dr.FieldCount; i++)
                 {
                     PropertyInfo prop = (PropertyInfo)hashtable[dr.GetName(i)];
-                    if (prop!=null)
+                    if (prop != null)
                     {
                         prop.SetValue(entity, dr.GetValue(i), null);
                     }
@@ -250,8 +251,8 @@ namespace SqlFramework
 
         private void CreateSelectQuery()
         {
-            this.Key = "";
-            this.Value = "";
+            Key = "";
+            Value = "";
             datas = new Dictionary<object, object>();
             KeyAttributes = new List<string>();
             foreach (var prop in GetT.GetType().GetProperties())
@@ -282,8 +283,8 @@ namespace SqlFramework
             }
             if (Key.Length > 0)
             {
-                Key = Key.Substring(0, (Key.Length - 1));
-                Value = Value.Substring(0, (Value.Length - 1));
+                Key = Key.Substring(0, Key.Length - 1);
+                Value = Value.Substring(0, Value.Length - 1);
             }
         }
 
@@ -299,7 +300,7 @@ namespace SqlFramework
                 Console.WriteLine("[Error Occurred] Error Message : {0}", e.Message);
 
             }
-            string cmd = String.Format("Update {0} Set {1} where {2} = @{3}", TableName, Key, Value, Value);
+            string cmd = string.Format("Update {0} Set {1} where {2} = @{3}", TableName, Key, Value, Value);
             SqlCommand command = new SqlCommand(cmd, _connection);
             foreach (var item in datas)
             {
@@ -353,7 +354,7 @@ namespace SqlFramework
             }
             if (Key.Length > 0)
             {
-                Key = Key.Substring(0, (Key.Length - 1));
+                Key = Key.Substring(0, Key.Length - 1);
 
             }
 
@@ -366,7 +367,7 @@ namespace SqlFramework
             try
             {
                 _connection.Open();
-                string cmd = String.Format("Delete From {0} Where {1}=@{2}", TableName, Key, Value);
+                string cmd = string.Format("Delete From {0} Where {1}=@{2}", TableName, Key, Value);
                 SqlCommand command = new SqlCommand(cmd, _connection);
                 foreach (var item in datas)
                 {
